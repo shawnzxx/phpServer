@@ -24,19 +24,20 @@ class Server
      */
     public $eventRules;
 
-    public function __construct($port) {
-        $this->serv = new swoole_http_server("0.0.0.0", $port);
+    public function __construct($port = 9501)
+    {
+        $this->serv = new swoole_http_server("0.0.0.0", 9501);
         $this->serv->set([
-            'worker_num'      => 2, //开启2个worker进程
-            'max_request'     => 4, //每个worker进程 max_request设置为4次
-            'document_root'   => '/',
+            'worker_num' => 2, //开启2个worker进程
+            'max_request' => 4, //每个worker进程 max_request设置为4次
+            'document_root' => '/',
             'enable_static_handler' => true,
-            'daemonize'       => false, //守护进程(true/false)
+            'daemonize' => false, //守护进程(true/false)
             'enable_coroutine' => false, // close build-in coroutine
         ]);
 
         $redis = new Redis();
-        $redis->connect('127.0.0.1',6379);
+        $redis->connect('127.0.0.1', 6379);
         $this->redis = $redis;
 
         $this->serv->on('Start', [$this, 'onStart']);
@@ -47,27 +48,30 @@ class Server
         $this->serv->start();
     }
 
-    public function onStart($serv) {
-        echo "#### onStart ####".PHP_EOL;
+    public function onStart($serv)
+    {
+        echo "#### onStart ####" . PHP_EOL;
         swoole_set_process_name('swoole_process_server_master');
 
-        echo "SWOOLE ".SWOOLE_VERSION . " 服务已启动".PHP_EOL;
-        echo "master_pid: {$serv->master_pid}".PHP_EOL;
-        echo "manager_pid: {$serv->manager_pid}".PHP_EOL;
-        echo "########".PHP_EOL.PHP_EOL;
+        echo "SWOOLE " . SWOOLE_VERSION . " 服务已启动" . PHP_EOL;
+        echo "master_pid: {$serv->master_pid}" . PHP_EOL;
+        echo "manager_pid: {$serv->manager_pid}" . PHP_EOL;
+        echo "########" . PHP_EOL . PHP_EOL;
 
         $this->redis->set("mykey", 50);
-        echo "redis key mykey set to: {$this->redis->get("mykey")}".PHP_EOL;
+        echo "redis key mykey set to: {$this->redis->get("mykey")}" . PHP_EOL;
     }
 
-    public function onManagerStart($serv) {
-        echo "#### onManagerStart ####".PHP_EOL.PHP_EOL;
+    public function onManagerStart($serv)
+    {
+        echo "#### onManagerStart ####" . PHP_EOL . PHP_EOL;
         swoole_set_process_name('swoole_process_server_manager');
     }
 
-    public function onWorkStart($serv, $worker_id) {
-        echo "Coroutine is " . (Co::getuid() > 0 ? 'enable' : 'disable')."\n";
-        echo "#### onWorkStart ####".PHP_EOL;
+    public function onWorkStart($serv, $worker_id)
+    {
+        echo "Coroutine is " . (Co::getuid() > 0 ? 'enable' : 'disable') . "\n";
+        echo "#### onWorkStart ####" . PHP_EOL;
         swoole_set_process_name('swoole_process_server_worker');
         spl_autoload_register(function ($className) {
             $classPath = __DIR__ . "/controller/" . $className . ".php";
@@ -78,20 +82,21 @@ class Server
         });
     }
 
-    public function onRequest($request, $response) {
+    public function onRequest($request, $response)
+    {
         $response->header("Server", "SwooleServer");
         $response->header("Content-Type", "application/json; charset=utf-8");
         $server = $request->server;
-        $path_info    = $server['path_info'];
-        $request_uri  = $server['request_uri'];
+        $path_info = $server['path_info'];
+        $request_uri = $server['request_uri'];
 
         if ($path_info == '/favicon.ico' || $request_uri == '/favicon.ico') {
             return $response->end();
         }
         $controller = 'Index';
-        $method     = 'home';
+        $method = 'home';
         if ($path_info != '/') {
-            $path_info = explode('/',$path_info);
+            $path_info = explode('/', $path_info);
             if (!is_array($path_info)) {
                 $response->status(404);
                 $response->end('URL不存在');
