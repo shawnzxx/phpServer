@@ -12,22 +12,28 @@ class Index
         $this->redis = $redis;
     }
 
-    public function home($request)
+    //之前的axgrow业务用国内的AMS，明文是913997639d4fb395a522872c52fe236e， encode后是 "!@*|encryption|*@!IsearPdvfinHdVp/Pg6hQ9JqKIRgosm9e7TXifWCTiZFpOJICn518B9jYS6qWFFA"
+    //后来专区海外AMS平台，新的应用ID下的明文是410197d1e562034cb440572138d24af9, encode后是"!@*|encryption|*@!1qGQn8MubH/pcs2rPlG+cW5AYcJM0hhfHmxDoDutAOclisPXes5mxMp5H/dOWojg"
+    public function testEncrypt($request){
+        $get = isset($request->get) ? $request->get : [];
+        $params = $get;
+        if(empty($params["token"])){
+            return "none token provided";
+        }
+        $str = $params["token"];
+        $a = openssl_encrypt($str, 'AES-256-CBC', '!@*||*@!',0,'@*|encryption|*@');
+        $secret="!@*|encryption|*@!".$a;
+        var_dump($secret);
+        return $secret;
+    }
+
+    public function testRedis($request)
     {
         try {
             $get = isset($request->get) ? $request->get : [];
+            $params = $get;
+            var_dump(is_numeric($params["openId"]));
             $result = "";
-            $stockCount = $this->redis->get(self::RedisKey);
-
-            echo "stockCount type: " . gettype($stockCount) . PHP_EOL;
-
-            if ($stockCount === false) {
-                $result .= "Not found key " . self::RedisKey . PHP_EOL;
-                return $result;
-            } else if ($stockCount <= 0) {
-                $result .= self::RedisKey . " out-of-stock" . PHP_EOL;
-                return $result;
-            }
             $count = $this->redis->decr(self::RedisKey);
             if ($count >= 0) {
                 $result .= self::RedisKey . " still have $count item left" . PHP_EOL;

@@ -1,7 +1,7 @@
 <?php
 
 //https://www.igorkromin.net/index.php/2017/12/07/how-to-pass-parameters-to-your-php-script-via-the-command-line/#:~:text=To%20pass%20command%20line%20arguments,script%20name%20like%20so...&text=Note%20that%20the%200th%20argument,accessed%20via%20the%20%24argv%20array.
-//php server.php 127.0.0.1 9501
+//启动 php server.php 127.0.0.1 9501
 //Argument #0 - server.php
 //Argument #1 - 127.0.0.1
 //Argument #2 - 9501
